@@ -35,9 +35,13 @@ Baltimore = homicide_tidy %>%
   filter(city_state == "Baltimore, MD") #get Baltimore data
 
 Baltimore_fit = Baltimore %>% 
-  glm(disposition ~ victim_age + victim_sex + victim_race, data = ., family = binomial()) %>% 
+  glm(disposition ~ victim_age + victim_sex + victim_race, data = ., family = binomial()) #run glm
+
+Baltimore_results = Baltimore_fit %>% 
   broom::tidy() %>% 
   mutate(OR = exp(estimate)) %>%
-  select(term, log_OR = estimate, OR, p.value)
+  select(term, log_OR = estimate, OR, p.value) 
+
+Baltimore_conf = confint(Baltimore_fit)
 ```
 
