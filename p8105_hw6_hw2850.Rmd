@@ -18,3 +18,15 @@ homicide = read_csv("data/homicide-data.csv") %>%
   janitor::clean_names()
 ```
 
+```{r}
+homicide_tidy = homicide %>% 
+  mutate(
+    city_state = str_c(city, ", " ,state), #create city_state variable
+    disposition = if_else(disposition %in% "Closed by arrest", 0, 1)
+    ) %>% #make disposition a binary variable
+  filter(!city_state %in% c("Dallas, TX", "Phoenix, AZ", "Kansas City, MO", "Tulsa, AL"),
+         victim_race %in% c("White", "Black")) %>% #Only select white & black
+  mutate(victim_age = as.numeric(victim_age)) %>% #make age numeric
+  select(!c(city, state))
+```
+
