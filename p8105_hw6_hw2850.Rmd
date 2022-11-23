@@ -30,3 +30,14 @@ homicide_tidy = homicide %>%
   select(!c(city, state))
 ```
 
+```{r}
+Baltimore = homicide_tidy %>% 
+  filter(city_state == "Baltimore, MD") #get Baltimore data
+
+Baltimore_fit = Baltimore %>% 
+  glm(disposition ~ victim_age + victim_sex + victim_race, data = ., family = binomial()) %>% 
+  broom::tidy() %>% 
+  mutate(OR = exp(estimate)) %>%
+  select(term, log_OR = estimate, OR, p.value)
+```
+
