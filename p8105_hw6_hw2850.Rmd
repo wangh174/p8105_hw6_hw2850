@@ -1,0 +1,9 @@
+---
+title: "p8105_hw6_hw2850"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
