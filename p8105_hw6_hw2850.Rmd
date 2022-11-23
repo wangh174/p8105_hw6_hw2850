@@ -45,3 +45,12 @@ Baltimore_results = Baltimore_fit %>%
 Baltimore_conf = confint(Baltimore_fit)
 ```
 
+```{r}
+#write a glm function
+glm_fun = function(homicide_tidy){
+  
+  glm = glm(disposition ~ victim_age + victim_sex + victim_race, data = ., family = binomial())
+  
+}
+```
+
