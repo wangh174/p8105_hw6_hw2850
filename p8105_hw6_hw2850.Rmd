@@ -7,3 +7,14 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(tidyverse)
+```
+
+###Problem 2
+```{r}
+#read data
+homicide = read_csv("data/homicide-data.csv") %>% 
+  janitor::clean_names()
+```
+
