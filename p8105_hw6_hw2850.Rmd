@@ -49,8 +49,18 @@ Baltimore_conf = confint(Baltimore_fit)
 #write a glm function
 glm_fun = function(homicide_tidy){
   
-  glm = glm(disposition ~ victim_age + victim_sex + victim_race, data = ., family = binomial())
+  glm = glm(disposition ~ victim_age + victim_sex + victim_race, data = homicide_tidy, family = binomial()) %>%
+    broom::tidy() %>% 
+    mutate(OR = exp(estimate)) %>%
+    select(term, log_OR = estimate, OR, p.value)
   
+  glm
 }
 ```
 
+```{r}
+homicide_nest = homicide_tidy %>% 
+  select(city_state, victim_race, victim_age, victim_sex, disposition) %>%
+  nest(data = victim_race:disposition) %>% #nest data and run glm on each city
+  mutate(models = map(data, glm_fun))
+```
