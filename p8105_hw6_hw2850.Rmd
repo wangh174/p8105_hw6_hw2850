@@ -64,3 +64,11 @@ homicide_nest = homicide_tidy %>%
   nest(data = victim_race:disposition) %>% #nest data and run glm on each city
   mutate(models = map(data, glm_fun))
 ```
+
+
+###Problem 3
+```{r}
+birthwt = read_csv("data/birthweight.csv") %>% 
+  janitor::clean_names()
+```
+
