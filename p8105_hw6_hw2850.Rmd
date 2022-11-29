@@ -38,11 +38,9 @@ Baltimore_fit = Baltimore %>%
   glm(disposition ~ victim_age + victim_sex + victim_race, data = ., family = binomial()) #run glm
 
 Baltimore_results = Baltimore_fit %>% 
-  broom::tidy() %>% 
+  broom::tidy(conf.int = T) %>% 
   mutate(OR = exp(estimate)) %>%
-  select(term, log_OR = estimate, OR, p.value) 
-
-Baltimore_conf = confint(Baltimore_fit)
+  select(term, log_OR = estimate, OR, p.value, conf.low, conf.high) 
 ```
 
 ```{r}
@@ -50,10 +48,10 @@ Baltimore_conf = confint(Baltimore_fit)
 glm_fun = function(homicide_tidy){
   
   glm = glm(disposition ~ victim_age + victim_sex + victim_race, data = homicide_tidy, family = binomial()) %>%
-    broom::tidy() %>% 
+    broom::tidy(conf.int = T) %>% 
     mutate(OR = exp(estimate)) %>%
-    select(term, log_OR = estimate, OR, p.value)
-  
+    select(term, log_OR = estimate, OR, p.value, conf.low, conf.high)
+
   glm
 }
 ```
@@ -70,5 +68,18 @@ homicide_nest = homicide_tidy %>%
 ```{r}
 birthwt = read_csv("data/birthweight.csv") %>% 
   janitor::clean_names()
+```
+Interested in investigating the relationship between birthweight and family monthly income (fincome) and mother's weight at delivery (delwt) as a confounder.
+
+```{r}
+birthwt %>% 
+  ggplot(aes(x = fincome, y = bwt)) +
+  geom_point(alpha = .5)
+```
+
+```{r}
+birthwt %>% 
+  ggplot(aes(x = blength, y = bwt))+
+  geom_point()
 ```
 
