@@ -22,11 +22,13 @@ homicide = read_csv("data/homicide-data.csv") %>%
 homicide_tidy = homicide %>% 
   mutate(
     city_state = str_c(city, ", " ,state), #create city_state variable
-    disposition = if_else(disposition %in% "Closed by arrest", 0, 1)
+    disposition = if_else(disposition %in% "Closed by arrest", 1, 0)
     ) %>% #make disposition a binary variable
   filter(!city_state %in% c("Dallas, TX", "Phoenix, AZ", "Kansas City, MO", "Tulsa, AL"),
          victim_race %in% c("White", "Black")) %>% #Only select white & black
-  mutate(victim_age = as.numeric(victim_age)) %>% #make age numeric
+  mutate(victim_age = as.numeric(victim_age), #make age numeric
+         victim_race = fct_relevel(victim_race, "White"),
+         disposition = as.numeric(disposition)) %>% 
   select(!c(city, state))
 ```
 
@@ -44,23 +46,31 @@ Baltimore_results = Baltimore_fit %>%
 ```
 
 ```{r}
-#write a glm function
-glm_fun = function(homicide_tidy){
-  
-  glm = glm(disposition ~ victim_age + victim_sex + victim_race, data = homicide_tidy, family = binomial()) %>%
-    broom::tidy(conf.int = T) %>% 
-    mutate(OR = exp(estimate)) %>%
-    select(term, log_OR = estimate, OR, p.value, conf.low, conf.high)
-
-  glm
-}
+homicide_nest = homicide_tidy %>% 
+  select(city_state, victim_race, victim_age, victim_sex, disposition) %>%
+  nest(data = -city_state) %>% #nest data and run glm on each city
+  mutate(models = map(data, ~glm(disposition ~ victim_age + victim_sex + victim_race, data = .x, family = binomial())),
+         results = map(models, ~broom::tidy(x = .x, conf.int = T))) %>% 
+  select(-data, -models) %>% 
+  unnest(results) %>% 
+  filter(term %in% "victim_sexMale") %>% #only need sex coefficients
+  mutate(OR = exp(estimate),
+         conf.low = exp(conf.low),
+         conf.high = exp(conf.high))
 ```
 
 ```{r}
-homicide_nest = homicide_tidy %>% 
-  select(city_state, victim_race, victim_age, victim_sex, disposition) %>%
-  nest(data = victim_race:disposition) %>% #nest data and run glm on each city
-  mutate(models = map(data, glm_fun))
+homicide_plot = homicide_nest %>% 
+  ggplot(aes(x = OR, y = reorder(city_state, OR)))+
+  geom_point()+
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high))+
+  labs(
+    title = "Adjusted OR and CI for Solving Homicides Comparing Victims Gender",
+    x = "Odds Ratio",
+    y = "City_State"
+  )
+
+homicide_plot
 ```
 
 
@@ -81,5 +91,10 @@ birthwt %>%
 birthwt %>% 
   ggplot(aes(x = blength, y = bwt))+
   geom_point()
+```
+
+```{r}
+lm = lm(bwt ~ fincome, data = birthwt)
+summary(lm)
 ```
 
