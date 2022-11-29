@@ -79,22 +79,12 @@ homicide_plot
 birthwt = read_csv("data/birthweight.csv") %>% 
   janitor::clean_names()
 ```
-Interested in investigating the relationship between birthweight and family monthly income (fincome) and mother's weight at delivery (delwt) as a confounder.
+Interested in investigating the relationship between mother's pre-pregnancy weight (ppwt) and baby's birth weight.
 
 ```{r}
 birthwt %>% 
-  ggplot(aes(x = fincome, y = bwt)) +
-  geom_point(alpha = .5)
+  ggplot(aes(x = ppwt, y = bwt)) +
+  geom_point(alpha = .5) #plot the trend between ppwt and bwt
 ```
 
-```{r}
-birthwt %>% 
-  ggplot(aes(x = blength, y = bwt))+
-  geom_point()
-```
-
-```{r}
-lm = lm(bwt ~ fincome, data = birthwt)
-summary(lm)
-```
 
