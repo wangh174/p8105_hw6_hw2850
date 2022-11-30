@@ -91,6 +91,24 @@ From the graph, there could be a linear relationship between ppwt and bwt. There
 ```{r}
 #fit a SLR model
 linear_mod = lm(bwt ~ ppwt, data = birthwt)
+linear_mod %>% 
+  broom::tidy()
 ```
+
+```{r}
+modelr::add_predictions(birthwt, linear_mod)
+modelr::add_residuals(birthwt, linear_mod)
+birthwt
+
+birthwt_plot = birthwt %>% 
+  modelr::add_residuals(linear_mod) %>% #add residuals
+  modelr::add_predictions(linear_mod) %>% #add predictions
+  ggplot(aes(x = pred, y = resid))+
+  geom_point()+
+  geom_smooth(se = F, method = "lm")
+
+birthwt_plot
+```
+
 
 
