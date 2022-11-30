@@ -72,7 +72,7 @@ homicide_plot = homicide_nest %>%
 
 homicide_plot
 ```
-
+From the plot, we can see that Albuquerque has the highest odd ratio for solving homicides comparing male victims to female victims whereas New York has the lowest odd ratio for solving homicides comparing male victims to female victims.
 
 ###Problem 3
 ```{r}
@@ -86,18 +86,18 @@ library(mgcv)
 birthwt = read_csv("data/birthweight.csv") %>% 
   janitor::clean_names()
 ```
-Interested in investigating the relationship between mother's pre-pregnancy weight (ppwt) and baby's birth weight because mother's pre-pregnancy weight could be an indicator of mothers' health condition and this may affect their newborns weight.
+Interested in investigating the relationship between mother's weight related variables (ppwt, ppbmi, wtgain, delwt) and baby's birth weight because mother's pre-pregnancy weight, pre-pregnancy BMI, weight gain during pregnancy and delivery weight could be factors of mothers' health condition and related to their newborns weight.
 
 ```{r}
 birthwt %>% 
-  ggplot(aes(x = ppwt, y = bwt)) +
-  geom_point(alpha = .5) #plot the trend between ppwt and bwt
+  ggplot(aes(x = ppwt + ppbmi + wtgain + delwt, y = bwt)) +
+  geom_point(alpha = .5) #plot the trend between ppwt, ppbmi, wtgain, delwt and bwt
 ```
-From the graph we can see that there is not a clear linear relationship between ppwt and bwt. But let's try fit a simple linear regression between mother's pre-pregnancy weight and baby's birth weight anyways.
+From the graph we can see that there is not a clear linear relationship between ppwt, ppbmi, wtgain, delwt and bwt. But let's try fit a linear (MLR) model anyways.
 
 ```{r}
 #fit a SLR model
-linear_mod = lm(bwt ~ ppwt, data = birthwt)
+linear_mod = lm(bwt ~ ppwt + ppbmi + wtgain + delwt, data = birthwt)
 linear_mod %>% 
   broom::tidy()
 ```
@@ -120,7 +120,7 @@ mlr_mod = lm(bwt ~ blength + gaweeks, data = birthwt)
 summary(mlr_mod)
 
 #run MLR model with head circumference, length, sex and their interactions
-inter_mod = lm(bwt ~ bhead*blength*babysex, data = birthwt)
+inter_mod = lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = birthwt)
 summary(inter_mod)
 ```
 
@@ -138,9 +138,9 @@ cv_df =
 cv_df = 
   cv_df %>% 
   mutate(
-    linear_mod  = map(train, ~lm(bwt ~ ppwt, data = .x)),
+    linear_mod  = map(train, ~lm(bwt ~ ppwt + ppbmi + wtgain + delwt, data = .x)),
     mlr_mod     = map(train, ~lm(bwt ~ blength + gaweeks, data = .x)),
-    inter_mod   = map(train, ~lm(bwt ~ bhead*blength*babysex, data = as_tibble(.x)))) %>% 
+    inter_mod   = map(train, ~lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = as_tibble(.x)))) %>% 
   mutate(
     rmse_linear = map2_dbl(linear_mod, test, ~rmse(model = .x, data = .y)),
     rmse_mlr    = map2_dbl(mlr_mod, test, ~rmse(model = .x, data = .y)),
@@ -159,4 +159,4 @@ cv_df %>%
   mutate(model = fct_inorder(model)) %>% 
   ggplot(aes(x = model, y = rmse)) + geom_violin()
 ```
-From the graph, we can clearly see that the RMSEs for linear model are significantly higher than the MLR model and Interaction model. Therefore, fitting ppwt and bwt with a simple linear model is definately not ideal. Between MLR model and Interaction model, the latter one has lower rmse. Therefore, baby's head circumference, length, and sex are interacting with each other and the Interaction model is better than the MLR model with length at birth and gestational age as predictors.
+From the graph, we can clearly see that the RMSEs for our linear model are significantly higher than the MLR model and Interaction model. Therefore, our model is not ideal. Between MLR model and Interaction model, the latter one has lower rmse. Therefore, baby's head circumference, length, and sex are interacting with each other and the Interaction model is better than the MLR model with length at birth and gestational age as predictors.
