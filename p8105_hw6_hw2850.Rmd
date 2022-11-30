@@ -120,5 +120,19 @@ interaction_mod = lm(bwt ~ bhead*blength*babysex, data = birthwt)
 summary(interaction_mod)
 ```
 
+```{r}
+#load packages
+library(modelr)
+library(mgcv)
+
+#plot three models
+birthwt %>% 
+  gather_predictions(linear_mod, mlr_mod, interaction_mod) %>% 
+  mutate(model = fct_inorder(model)) %>% 
+  ggplot(aes(x = ppwt, y = bwt)) + 
+  geom_point(alpha = .5) +
+  geom_line(aes(y = pred), color = "red") + 
+  facet_grid(~model)
+```
 
 
