@@ -110,5 +110,15 @@ birthwt_plot = birthwt %>%
 birthwt_plot
 ```
 
+```{r}
+#run MLR model with length at birth and gestational age
+mlr_mod = lm(bwt ~ blength + gaweeks, data = birthwt) 
+summary(mlr_mod)
+
+#run MLR model with head circumference, length, sex and their interactions
+interaction_mod = lm(bwt ~ bhead*blength*babysex, data = birthwt)
+summary(interaction_mod)
+```
+
 
 
