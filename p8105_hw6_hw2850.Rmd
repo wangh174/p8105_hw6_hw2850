@@ -86,5 +86,11 @@ birthwt %>%
   ggplot(aes(x = ppwt, y = bwt)) +
   geom_point(alpha = .5) #plot the trend between ppwt and bwt
 ```
+From the graph, there could be a linear relationship between ppwt and bwt. Therefore, lets fit a simple linear regression model.
+
+```{r}
+#fit a SLR model
+linear_mod = lm(bwt ~ ppwt, data = birthwt)
+```
 
 
