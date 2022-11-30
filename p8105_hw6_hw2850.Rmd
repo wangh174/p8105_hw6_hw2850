@@ -76,17 +76,24 @@ homicide_plot
 
 ###Problem 3
 ```{r}
+#load packages
+library(modelr)
+library(mgcv)
+```
+
+```{r}
+#load data
 birthwt = read_csv("data/birthweight.csv") %>% 
   janitor::clean_names()
 ```
-Interested in investigating the relationship between mother's pre-pregnancy weight (ppwt) and baby's birth weight.
+Interested in investigating the relationship between mother's pre-pregnancy weight (ppwt) and baby's birth weight because mother's pre-pregnancy weight could be an indicator of mothers' health condition and this may affect their newborns weight.
 
 ```{r}
 birthwt %>% 
   ggplot(aes(x = ppwt, y = bwt)) +
   geom_point(alpha = .5) #plot the trend between ppwt and bwt
 ```
-From the graph, there could be a linear relationship between ppwt and bwt. Therefore, lets fit a simple linear regression model.
+From the graph we can see that there is not a clear linear relationship between ppwt and bwt. But let's try fit a simple linear regression between mother's pre-pregnancy weight and baby's birth weight anyways.
 
 ```{r}
 #fit a SLR model
@@ -96,10 +103,6 @@ linear_mod %>%
 ```
 
 ```{r}
-modelr::add_predictions(birthwt, linear_mod)
-modelr::add_residuals(birthwt, linear_mod)
-birthwt
-
 birthwt_plot = birthwt %>% 
   modelr::add_residuals(linear_mod) %>% #add residuals
   modelr::add_predictions(linear_mod) %>% #add predictions
@@ -107,8 +110,9 @@ birthwt_plot = birthwt %>%
   geom_point()+
   geom_smooth(se = F, method = "lm")
 
-birthwt_plot
+birthwt_plot #plot residuals against fitted values
 ```
+The plot does not has a random pattern and evenly distributed around 0, which may indicate the model does not meet homoscedasticity.
 
 ```{r}
 #run MLR model with length at birth and gestational age
@@ -116,23 +120,43 @@ mlr_mod = lm(bwt ~ blength + gaweeks, data = birthwt)
 summary(mlr_mod)
 
 #run MLR model with head circumference, length, sex and their interactions
-interaction_mod = lm(bwt ~ bhead*blength*babysex, data = birthwt)
-summary(interaction_mod)
+inter_mod = lm(bwt ~ bhead*blength*babysex, data = birthwt)
+summary(inter_mod)
 ```
 
 ```{r}
-#load packages
-library(modelr)
-library(mgcv)
-
-#plot three models
-birthwt %>% 
-  gather_predictions(linear_mod, mlr_mod, interaction_mod) %>% 
-  mutate(model = fct_inorder(model)) %>% 
-  ggplot(aes(x = ppwt, y = bwt)) + 
-  geom_point(alpha = .5) +
-  geom_line(aes(y = pred), color = "red") + 
-  facet_grid(~model)
+#cross validation between models
+cv_df =
+  crossv_mc(birthwt, 1000) %>% 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble))
 ```
 
+```{r}
+#get corresponding RMSEs for the testing data 
+cv_df = 
+  cv_df %>% 
+  mutate(
+    linear_mod  = map(train, ~lm(bwt ~ ppwt, data = .x)),
+    mlr_mod     = map(train, ~lm(bwt ~ blength + gaweeks, data = .x)),
+    inter_mod   = map(train, ~lm(bwt ~ bhead*blength*babysex, data = as_tibble(.x)))) %>% 
+  mutate(
+    rmse_linear = map2_dbl(linear_mod, test, ~rmse(model = .x, data = .y)),
+    rmse_mlr    = map2_dbl(mlr_mod, test, ~rmse(model = .x, data = .y)),
+    rmse_inter  = map2_dbl(inter_mod, test, ~rmse(model = .x, data = .y)))
+```
 
+```{r}
+#plot the prediction error distribution for each candidate model
+cv_df %>% 
+  select(starts_with("rmse")) %>% 
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+  mutate(model = fct_inorder(model)) %>% 
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
+```
+From the graph, we can clearly see that the RMSEs for linear model are significantly higher than the MLR model and Interaction model. Therefore, fitting ppwt and bwt with a simple linear model is definately not ideal. Between MLR model and Interaction model, the latter one has lower rmse. Therefore, baby's head circumference, length, and sex are interacting with each other and the Interaction model is better than the MLR model with length at birth and gestational age as predictors.
